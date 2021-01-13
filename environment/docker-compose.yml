@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+  int-test-vault-s:
+    image: vault:1.5.0
+    container_name: int-test-vault-c
+    restart: always
+    volumes:
+      - ./vault.hcl:/vault.hcl:z
+    environment:
+      - "VAULT_DEV_ROOT_TOKEN_ID=testtoken"
+      - "VAULT_TOKEN=testtoken"
+    command: ["server", "-dev"]
+    ports:
+      - "58200:8200"
+
+  int-test-scylla-s:
+    container_name: int-test-scylla-c
+    image: scylladb/scylla
+    command:
+      - --authenticator=PasswordAuthenticator
+      - --authorizer=CassandraAuthorizer
+      - --smp=2
+    volumes:
+      - ./scylla_conf/init.cql:/etc/init.cql:z
+    ports:
+      - "9042:9042"

@@ -1,0 +1,10 @@
+*.json
+*.log
+build
+vendor
+bin/
+*.cov
+.vscode/
+cmd/testdata/jwtsig-prv-ks.p12
+scripts/vault_db_test.sh
+devsetup/test_data/vm_extension
