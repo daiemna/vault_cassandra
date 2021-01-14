@@ -30,4 +30,19 @@ vault auth enable userpass && \
 vault secrets enable database && \
 vault write auth/userpass/users/john \
    password=doe \
-   policies=go-fidelio-read-write
+   policies=go-fidelio-read-write && \
+vault write database/config/scylla-prod \
+      plugin_name="cassandra-database-plugin" \
+      allowed_roles="*" \
+      hosts=int-test-scylla-c \
+      protocol_version=4 \
+      username="vaultadmin" \
+      password="vaultpass" && \
+vault write database/roles/my-role \
+    db_name=scylla-prod \
+    creation_statements="CREATE USER '{{username}}' WITH PASSWORD '{{password}}' NOSUPERUSER; \
+          GRANT SELECT ON ALL KEYSPACES TO {{username}};" \
+    default_ttl="60s" \
+    max_ttl="60s"
+
+
