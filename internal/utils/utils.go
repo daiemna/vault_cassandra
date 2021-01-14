@@ -1,21 +1,35 @@
 package utils
 
 import (
-	"github.com/gocql/gocql"
-	"github.com/rs/zerolog/log"
+	"fmt"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/rs/zerolog"
 )
 
-func initCassandra(cassPort int) *gocql.Session {
-	cluster := gocql.NewCluster("127.0.0.1")
-	cluster.CQLVersion = "4.0.0"
-	cluster.Port = cassPort
-	cluster.Authenticator = gocql.PasswordAuthenticator{
-		Username: "cassandra",
-		Password: "cassandra",
+// SetupLogger configures the logger and sets the log level
+func SetupLogger(debug bool) zerolog.Logger {
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	output.FormatLevel = func(i interface{}) string {
+		return strings.ToUpper(fmt.Sprintf("| %-6s|", i))
 	}
-	session, err := cluster.CreateSession()
-	if err != nil {
-		log.Error().Msgf("error in cassandra session create: %v", err)
+	output.FormatMessage = func(i interface{}) string {
+		return fmt.Sprintf("%s", i)
 	}
-	return session
+	output.FormatFieldName = func(i interface{}) string {
+		return fmt.Sprintf("%s:", i)
+	}
+	output.FormatFieldValue = func(i interface{}) string {
+		return strings.ToUpper(fmt.Sprintf("%s", i))
+	}
+
+	if debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
+
+	return zerolog.New(output).With().Timestamp().Logger()
 }
