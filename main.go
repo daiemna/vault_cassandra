@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/daiemna/vault_cassandra/internal/bigdb"
@@ -35,7 +36,7 @@ func testCassandraConnection(session *gocql.Session) {
 
 func testVaultCassandra(session *gocql.Session, vaultClient *vault.Client) {
 	const delay = 1
-	defer log.Info().Msg("Test passed!")
+
 	secret, err := vaultClient.Read("database/creds/my-role")
 	if err != nil {
 		log.Debug().Msgf("Error in vault read : %v", err)
@@ -52,7 +53,12 @@ func testVaultCassandra(session *gocql.Session, vaultClient *vault.Client) {
 	time.Sleep(leaseDuration)
 
 	if err := doseRoleExist(roleName, session); err != nil {
-		log.Info().Msgf("Error in role check, after role expiry: %v", err)
+		if strings.Contains(err.Error(), "not found") {
+			log.Info().Msg("Role not found, as expected.")
+			log.Info().Msg("Test Done!")
+			return
+		}
+		log.Fatal().Msgf("Error in role check, after role expiry: %v", err)
 	}
 }
 
