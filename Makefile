@@ -29,9 +29,7 @@ environment:  ## Recreate the test environment
 
 .PHONY: run
 run:         ## Clean the application
-	@go clean -i ./...
-	@rm -rf ./$(PROJECT_NAME)
-	@rm -rf build/*
+	go run main.go
 
 .PHONY: vendor
 vendor:           ## Go get vendor
