@@ -1,5 +1,4 @@
 #!/bin/bash
-# export VAULT_TOKEN="thisisarealroottoken"
 
 vault_bin_path=environment/bin
 vault_ver=1.5.0
