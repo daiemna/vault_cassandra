@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/daiemna/vault_cassandra/internal/bigdb"
@@ -19,7 +21,6 @@ func doseRoleExist(roleName string, session *gocql.Session) error {
 	if err != nil {
 		return fmt.Errorf("error in role query: %v", err)
 	}
-	log.Debug().Msgf("roleName: %s", roleName)
 	if roleID != roleName {
 		return fmt.Errorf("role not present")
 	}
@@ -34,7 +35,7 @@ func testCassandraConnection(session *gocql.Session) {
 	log.Debug().Msgf("ks StrategyClass : %s", ksMeta.StrategyClass)
 }
 
-func testVaultCassandra(session *gocql.Session, vaultClient *vault.Client) {
+func testCassandraCredentials(session *gocql.Session, vaultClient *vault.Client) {
 	const delay = 1
 
 	secret, err := vaultClient.Read("database/creds/my-role")
@@ -62,10 +63,30 @@ func testVaultCassandra(session *gocql.Session, vaultClient *vault.Client) {
 	}
 }
 
-func main() {
+func testCassandraCredentialsMultiRead(session *gocql.Session, vaultClient *vault.Client, readCount int) error {
+	const delay = 1
+
+	secret, err := vaultClient.Read("database/creds/my-role")
+	if err != nil {
+		return fmt.Errorf("Error in vault read : %v", err)
+	}
+	roleName := secret.Data["username"].(string)
+
+	for i := 0; i < readCount; i++ {
+		err := doseRoleExist(roleName, session)
+		if err != nil {
+			return fmt.Errorf("Error in role read check: %v", err)
+		}
+	}
+	return nil
+}
+
+func testVaultCassandra(routineNumber, readCount int, wg *sync.WaitGroup) {
+	wg.Add(1)
+	defer wg.Done()
 	cassConf := bigdb.DefaultClusterConfig()
 	cassSession := bigdb.NewCassandraSession(cassConf)
-	log.Debug().Msg("cassandra init done")
+	// log.Debug().Msgf("cassandra init done routine num %d", routineNumber)
 
 	vaultClient, err := vault.NewRootClient()
 
@@ -73,7 +94,20 @@ func main() {
 		log.Fatal().Msgf("error creating vault client: %v", err)
 	}
 
-	testCassandraConnection(cassSession)
+	err = testCassandraCredentialsMultiRead(cassSession, vaultClient, readCount)
+	if err != nil {
+		log.Fatal().Msgf("error testing cassandra: %v", err)
+	}
 
-	testVaultCassandra(cassSession, vaultClient)
+}
+
+func main() {
+	routineCount := 50
+	readCount := 50
+	var waitGroup sync.WaitGroup
+	os.Setenv("VAULT_TOKEN", "testtoken")
+	for i := 0; i < routineCount; i++ {
+		go testVaultCassandra(i, readCount, &waitGroup)
+	}
+	waitGroup.Wait()
 }

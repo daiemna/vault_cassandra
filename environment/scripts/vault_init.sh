@@ -34,7 +34,7 @@ vault write auth/userpass/users/john \
 vault write database/config/scylla-prod \
       plugin_name="cassandra-database-plugin" \
       allowed_roles="*" \
-      hosts=int-test-scylla-c \
+      hosts="int-test-scylla-c,127.0.0.1" \
       protocol_version=4 \
       username="vaultadmin" \
       password="vaultpass" && \

@@ -1,6 +1,8 @@
 package bigdb
 
 import (
+	"time"
+
 	"github.com/gocql/gocql"
 	"github.com/rs/zerolog/log"
 )
@@ -14,6 +16,7 @@ type CassandraConfig struct {
 	pass       string
 }
 
+//DefaultClusterConfig can be used to init CassandraConfig with default config.
 func DefaultClusterConfig() *CassandraConfig {
 	return &CassandraConfig{
 		IP:         []string{"127.0.0.1"},
@@ -29,6 +32,8 @@ func NewCassandraSession(config *CassandraConfig) *gocql.Session {
 	cluster := gocql.NewCluster(config.IP...)
 	cluster.CQLVersion = config.cqlVersion
 	cluster.Port = config.port
+	cluster.Timeout = time.Second * 5
+	cluster.ConnectTimeout = time.Second * 5
 	cluster.Authenticator = gocql.PasswordAuthenticator{
 		Username: config.user,
 		Password: config.pass,

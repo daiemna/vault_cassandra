@@ -16,7 +16,7 @@ services:
 
   int-test-scylla-s:
     container_name: int-test-scylla-c
-    image: scylladb/scylla
+    image: scylladb/scylla:3.2.5
     command:
       - --authenticator=PasswordAuthenticator
       - --authorizer=CassandraAuthorizer

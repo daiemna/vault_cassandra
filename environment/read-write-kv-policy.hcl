@@ -14,16 +14,3 @@ path "database/*" {
 path "database/config/*" {
   capabilities = [ "read", "create", "update", "list" ]
 }
-
-path "database/static-roles/postgres-client" {
-  capabilities = [ "read", "create", "update", "list" ]
-}
-
-
-path "database/static-roles/vernemq_db-static-role-staging" {
-  capabilities = [ "read", "create", "update", "list" ]
-}
-
-path "database/static-roles/vernemq_db-static-role-development" {
-  capabilities = [ "read", "create", "update", "list" ]
-}
